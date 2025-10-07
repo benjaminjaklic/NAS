@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Storage Requests{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0">Pending Storage Requests</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Current Usage</th>
+                            <th>Requested</th>
+                            <th>Reason</th>
+                            <th>Requested On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in requests %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('admin.user_detail', user_id=request.user_id) }}">
+                                    {{ request.user.username }}
+                                </a>
+                            </td>
+                            <td>
+                                {{ (request.user.storage_used / (1024**3))|round(2) }} / 
+                                {{ (request.user.storage_limit / (1024**3))|round(2) }} GB
+                                ({{ ((request.user.storage_used / request.user.storage_limit) * 100)|round(1) }}%)
+                            </td>
+                            <td>{{ (request.requested_size / (1024**3))|round(2) }} GB</td>
+                            <td>{{ request.reason }}</td>
+                            <td>{{ request.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <form method="POST" action="{{ url_for('admin.handle_storage_request', request_id=request.id) }}" style="display: inline;">
+                                        <input type="hidden" name="action" value="approve">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.handle_storage_request', request_id=request.id) }}" style="display: inline;">
+                                        <input type="hidden" name="action" value="deny">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-times"></i> Deny
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">No pending storage requests</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

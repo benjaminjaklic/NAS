@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>User Management</h2>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0">All Users</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                            <th>Last Login</th>
+                            <th>Storage Used</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.is_admin %}
+                                    {% if user.id == default_admin_id %}
+                                    <span class="badge bg-primary">Default Admin</span>
+                                    {% else %}
+                                    <span class="badge bg-info">Admin</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="badge bg-secondary">User</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'N/A' }}</td>
+                            <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never' }}</td>
+                            <td>
+                                {% set storage_used = user.get_storage_usage() %}
+                                {% set storage_limit = user.storage_limit or 0 %}
+                                {% set usage_percent = (storage_used / storage_limit * 100) if storage_limit > 0 else 0 %}
+                                
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                        <div class="progress-bar {% if usage_percent > 90 %}bg-danger{% elif usage_percent > 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {{ usage_percent }}%;" 
+                                             aria-valuenow="{{ usage_percent }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100"></div>
+                                    </div>
+                                    <small>
+                                        {% if storage_used < 1024 %}
+                                            {{ storage_used }} B
+                                        {% elif storage_used < 1048576 %}
+                                            {{ (storage_used / 1024) | round(1) }} KB
+                                        {% elif storage_used < 1073741824 %}
+                                            {{ (storage_used / 1048576) | round(1) }} MB
+                                        {% else %}
+                                            {{ (storage_used / 1073741824) | round(1) }} GB
+                                        {% endif %}
+                                        /
+                                        {% if storage_limit < 1024 %}
+                                            {{ storage_limit }} B
+                                        {% elif storage_limit < 1048576 %}
+                                            {{ (storage_limit / 1024) | round(1) }} KB
+                                        {% elif storage_limit < 1073741824 %}
+                                            {{ (storage_limit / 1048576) | round(1) }} MB
+                                        {% else %}
+                                            {{ (storage_limit / 1073741824) | round(1) }} GB
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if user.is_approved %}
+                                <span class="badge bg-success">Approved</span>
+                                {% else %}
+                                <span class="badge bg-warning">Pending Approval</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    {% if not user.is_admin %}
+                                        {% if not user.is_approved %}
+                                        <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success me-1">Approve</button>
+                                        </form>
+                                        {% endif %}
+                                        
+                                        {% if user.is_approved %}
+                                        <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id, action='revoke') }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-warning me-1">Revoke</button>
+                                        </form>
+                                        {% endif %}
+                                        
+                                        <!-- Make Admin button -->
+                                        <form method="POST" action="{{ url_for('admin.make_admin', user_id=user.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-info me-1">Make Admin</button>
+                                        </form>
+                                        
+                                        <!-- Delete button (only if not default admin) -->
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                onclick="confirmDeleteUser({{ user.id }}, '{{ user.username }}')">
+                                            Delete
+                                        </button>
+                                    {% else %}
+                                        <!-- User is an admin -->
+                                        {% if user.id != default_admin_id and current_user.id == default_admin_id %}
+                                            <!-- Revoke Admin button (only shown to default admin) -->
+                                            <form method="POST" action="{{ url_for('admin.revoke_admin', user_id=user.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-warning me-1">Revoke Admin</button>
+                                            </form>
+                                            
+                                            <!-- Delete button (only shown to default admin) -->
+                                            <button type="button" class="btn btn-sm btn-danger" 
+                                                    onclick="confirmDeleteUser({{ user.id }}, '{{ user.username }}')">
+                                                Delete
+                                            </button>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete user <span id="user-to-delete" class="font-weight-bold"></span>?</p>
+                <p class="text-danger">This will delete all files owned by this user and cannot be undone!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="delete-user-form" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">Delete User</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDeleteUser(userId, username) {
+        document.getElementById('user-to-delete').textContent = username;
+        document.getElementById('delete-user-form').action = "{{ url_for('admin.delete_user', user_id=0) }}".replace('0', userId);
+        
+        var deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+        deleteModal.show();
+    }
+</script>
+{% endblock %}

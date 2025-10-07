@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>🧠 AI Summary Dashboard</h2>
+
+<form method="post">
+  <div class="form-group">
+    <label>Select a file (optional):</label>
+    <input type="text" id="searchInput" class="form-control" placeholder="Search files...">
+
+    <select name="selected_file" class="form-control mt-2" size="5" id="fileSelect">
+      {% for file in all_txt_files %}
+        <option value="{{ file }}" {% if file == selected_file %}selected{% endif %}>{{ file }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="form-group mt-3">
+    <label>Or paste text manually:</label>
+    <textarea name="text" class="form-control" rows="8">{{ request.form.text or '' }}</textarea>
+  </div>
+
+  <div class="form-row mt-3">
+    <div class="col">
+      <label>Language:</label>
+      <select name="language" class="form-control">
+        <option>English</option>
+        <option>Slovenian</option>
+        <option>Croatian</option>
+        <option>German</option>
+        <option>French</option>
+      </select>
+    </div>
+    <div class="col">
+      <label>Summary length:</label>
+      <select name="detail" class="form-control">
+        <option value="short">Short</option>
+        <option value="medium" selected>Medium</option>
+        <option value="long">Long</option>
+      </select>
+    </div>
+    <div class="col">
+      <label>Summary type:</label>
+      <select name="mode" class="form-control">
+        <option value="summary">Summary</option>
+        <option value="bullet">Key points</option>
+        <option value="analysis">Argument analysis</option>
+        <option value="opinion">Summary + opinion</option>
+      </select>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary mt-4">Generate Summary</button>
+</form>
+
+{% if summary %}
+<hr>
+<h4>📝 AI Summary:</h4>
+<pre class="bg-light p-3" style="white-space: pre-wrap;">{{ summary }}</pre>
+{% endif %}
+
+{% if error %}
+<div class="alert alert-danger mt-3">{{ error }}</div>
+{% endif %}
+
+<script>
+document.getElementById("searchInput").addEventListener("input", function() {
+  let filter = this.value.toLowerCase();
+  let options = document.getElementById("fileSelect").options;
+  for (let i = 0; i < options.length; i++) {
+    let optionText = options[i].text.toLowerCase();
+    options[i].style.display = optionText.includes(filter) ? "block" : "none";
+  }
+});
+</script>
+{% endblock %}

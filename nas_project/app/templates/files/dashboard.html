@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Files Dashboard - NAS System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>My Files</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="fas fa-upload"></i> Upload File
+            </button>
+            <a href="{{ url_for('files.manage_tags') }}" class="btn btn-outline-primary">
+                <i class="fas fa-tags"></i> Manage Tags
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ... (skrajšano: kartice za storage in tag filter) ... -->
+
+<!-- File List -->
+<div class="card">
+    <div class="card-body">
+        <!-- ... (iskalnik) ... -->
+        
+        <div class="table-responsive">
+            <table class="table table-hover" id="filesTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Tags</th>
+                        <th>Size</th>
+                        <th>Uploaded</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>
+                            {% if file.is_archive() %}
+                            <i class="fas fa-folder text-warning me-1"></i>
+                            {% endif %}
+                            {{ file.original_filename }}
+                        </td>
+                        <td>{{ file.category|default('other')|title }}</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% for tag in file.tags %}
+                                <span class="badge" style="background-color: {{ tag.color }}">{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td>{{ (file.file_size / (1024*1024))|round(2) }} MB</td>
+                        <td>{{ file.uploaded_at.strftime('%Y-%m-%d %H:%M') if file.uploaded_at else 'N/A' }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('files.download_file', file_id=file.id) }}" class="btn btn-success">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                {% if file.original_filename.endswith('.txt') or file.original_filename.endswith('.pdf') %}
+                                <a href="{{ url_for('ai.ai_dashboard') }}" class="btn btn-primary">AI Dashboard
+
+                                    <i class="fas fa-brain"></i>
+                                </a>
+                                {% endif %}
+                                <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#tagModal" 
+                                        data-file-id="{{ file.id }}" data-filename="{{ file.original_filename }}">
+                                    <i class="fas fa-tags"></i>
+                                </button>
+                                <button class="btn btn-danger delete-file-btn" 
+                                        data-file-id="{{ file.id }}" data-filename="{{ file.original_filename }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">No files found. Upload your first file!</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Include upload modal -->
+{% include 'files/partials/upload_modal.html' %}
+
+<!-- Delete + Tag Modals -->
+<!-- ... (ni spremenjeno) ... -->
+
+{% endblock %}
+{% block extra_js %}
+<!-- ostane nespremenjeno -->
+{{ super() }}
+{% endblock %}

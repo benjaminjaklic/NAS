@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}System Status{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- System Overview -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0">System Overview</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Storage Usage -->
+                <div class="col-md-6 mb-4">
+                    <h5>Total Storage Usage</h5>
+                    <div class="progress mb-2">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {{ (total_storage_used / total_storage_limit * 100)|round|int }}%">
+                            {{ (total_storage_used / total_storage_limit * 100)|round|int }}%
+                        </div>
+                    </div>
+                    <p>Used: {{ (total_storage_used / (1024**3))|round(2) }} GB / 
+                       Total: {{ (total_storage_limit / (1024**3))|round(2) }} GB</p>
+                </div>
+
+                <!-- User Stats -->
+                <div class="col-md-6 mb-4">
+                    <h5>User Statistics</h5>
+                    <div class="list-group">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            Total Users
+                            <span class="badge bg-primary rounded-pill">{{ total_users }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            Active Users (Last 24h)
+                            <span class="badge bg-success rounded-pill">{{ active_users }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            Storage Requests
+                            <span class="badge bg-warning rounded-pill">{{ pending_requests }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0">System Health</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th>Database Status</th>
+                            <td>
+                                <span class="badge bg-success">Connected</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Storage Service</th>
+                            <td>
+                                <span class="badge bg-success">Available</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Last Backup</th>
+                            <td>{{ last_backup.strftime('%Y-%m-%d %H:%M:%S') if last_backup else 'Never' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent System Events -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0">Recent System Events</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Event</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in system_events %}
+                        <tr>
+                            <td>{{ event.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>{{ event.type }}</td>
+                            <td>{{ event.details }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center">No recent system events</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

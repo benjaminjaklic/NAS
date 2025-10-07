@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- User Info Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0">User Information</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="mb-3">{{ user.username }}</h2>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Role:</strong> {% if user.is_admin %}Administrator{% else %}User{% endif %}</p>
+                    <p><strong>Status:</strong> 
+                        {% if user.is_approved %}
+                            <span class="badge bg-success">Approved</span>
+                        {% else %}
+                            <span class="badge bg-warning">Pending Approval</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Joined:</strong> {{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'N/A' }}</p>
+                    <p><strong>Last Login:</strong> {{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never' }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Storage Info Card -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0">Storage Usage</h5>
+                </div>
+                <div class="card-body">
+                    {% set storage_used = user.get_storage_usage() %}
+                    {% set storage_limit = user.storage_limit or 0 %}
+                    {% set usage_percent = (storage_used / storage_limit * 100) if storage_limit > 0 else 0 %}
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>{{ usage_percent|round(1) }}% used</span>
+                            <span>
+                                {% if storage_used < 1024 %}
+                                    {{ storage_used }} B
+                                {% elif storage_used < 1048576 %}
+                                    {{ (storage_used / 1024) | round(1) }} KB
+                                {% elif storage_used < 1073741824 %}
+                                    {{ (storage_used / 1048576) | round(1) }} MB
+                                {% else %}
+                                    {{ (storage_used / 1073741824) | round(1) }} GB
+                                {% endif %}
+                                /
+                                {% if storage_limit < 1024 %}
+                                    {{ storage_limit }} B
+                                {% elif storage_limit < 1048576 %}
+                                    {{ (storage_limit / 1024) | round(1) }} KB
+                                {% elif storage_limit < 1073741824 %}
+                                    {{ (storage_limit / 1048576) | round(1) }} MB
+                                {% else %}
+                                    {{ (storage_limit / 1073741824) | round(1) }} GB
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar {% if usage_percent > 90 %}bg-danger{% elif usage_percent > 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {{ usage_percent }}%;" 
+                                 aria-valuenow="{{ usage_percent }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    {% if not user.is_admin %}
+                    <div class="mt-4">
+                        <h6>Need more storage?</h6>
+                        <p>If you're running low on storage, you can request an increase.</p>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#storageRequestModal">
+                            Request More Storage
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Account Settings Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0">Account Settings</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" value="{{ user.email }}" disabled>
+                        <div class="form-text">Email cannot be changed.</div>
+                    </div>
+                    <div class="col-md-12 mt-4">
+                        <h6>Change Password</h6>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                    </div>
+                    <div class="col-12 mt-3">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Storage Request Modal -->
+<div class="modal fade" id="storageRequestModal" tabindex="-1" aria-labelledby="storageRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="storageRequestModalLabel">Request Storage Increase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('files.request_storage') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="requested_size" class="form-label">Requested Storage Size</label>
+                        <select class="form-select" id="requested_size" name="requested_size" required>
+                            <option value="{{ user.storage_limit * 2 }}">{{ (user.storage_limit * 2 / 1073741824)|round(0) }} GB (2x current)</option>
+                            <option value="{{ user.storage_limit * 5 }}">{{ (user.storage_limit * 5 / 1073741824)|round(0) }} GB (5x current)</option>
+                            <option value="{{ user.storage_limit * 10 }}">{{ (user.storage_limit * 10 / 1073741824)|round(0) }} GB (10x current)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Reason for Request</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                        <div class="form-text">Please explain why you need additional storage.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

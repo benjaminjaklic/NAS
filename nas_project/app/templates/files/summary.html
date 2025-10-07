@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Povzetek - NAS{% endblock %}
+
+{% block content %}
+<h3>📄 Povzetek za: {{ filename }}</h3>
+<pre style="white-space: pre-wrap; background-color: #222; color: #eee; padding: 1em; border-radius: 5px;">{{ summary }}</pre>
+<a href="{{ url_for('files.dashboard') }}" class="btn btn-secondary mt-3">← Nazaj</a>
+{% endblock %}

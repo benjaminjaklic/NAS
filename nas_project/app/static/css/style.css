@@ -1,0 +1,244 @@
+/* Main Layout */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+}
+
+main {
+    flex: 1;
+    padding: 2rem 0;
+}
+
+/* Navigation */
+.navbar {
+    background-color: #ffffff !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.navbar-dark {
+    background-color: #ffffff !important;
+}
+
+.navbar-brand {
+    color: #4f46e5 !important;
+    font-weight: 600;
+}
+
+.nav-link {
+    color: #64748b !important;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    color: #4f46e5 !important;
+}
+
+/* Cards */
+.card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+}
+
+/* Admin Stats Cards - Keep the colorful design */
+.admin-stats .card {
+    color: white;
+    border: none;
+}
+
+.admin-stats .total-users {
+    background-color: #4f46e5;  /* Original blue */
+}
+
+.admin-stats .pending-approvals {
+    background-color: #fbbf24;  /* Original yellow */
+}
+
+.admin-stats .storage-requests {
+    background-color: #06b6d4;  /* Original cyan */
+}
+
+/* File type badges */
+.badge {
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 600;
+    border-radius: 6px;
+    text-transform: capitalize;
+}
+
+.badge-document {
+    background-color: #4f46e5;
+    color: white;
+}
+
+/* Storage Usage Bar */
+.storage-progress {
+    height: 10px;
+    background-color: #e2e8f0;
+    border-radius: 999px;
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+.storage-progress-bar {
+    background-color: #4f46e5;
+    transition: width 0.3s ease;
+}
+
+/* File List Table */
+.table {
+    background-color: #ffffff;
+    margin-bottom: 0;
+}
+
+.table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #1e293b;
+    border-top: none;
+    padding: 1rem;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 1rem;
+    color: #475569;
+    border-top: 1px solid #e2e8f0;
+}
+
+.table tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #4f46e5;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background-color: #4338ca;
+}
+
+/* Upload Button */
+.upload-btn {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.upload-btn:hover {
+    background-color: #4338ca;
+}
+
+/* Upload Modal */
+.modal-content {
+    border-radius: 8px;
+    border: none;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    background-color: #ffffff;
+    color: #1e293b;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    background-color: #ffffff;
+}
+
+.modal-footer {
+    background-color: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+}
+
+/* Form Controls */
+.form-label {
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.form-control, .form-select {
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+/* Upload Progress */
+.upload-progress {
+    height: 15px;
+    background-color: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.upload-progress-bar {
+    background-color: #4f46e5;
+    transition: width 0.3s ease;
+}
+
+/* Footer */
+.footer {
+    background-color: #ffffff;
+    padding: 1rem 0;
+    margin-top: auto;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+}
+
+/* Alerts */
+.alert {
+    border-radius: 6px;
+    border: 1px solid transparent;
+}
+
+.alert-success {
+    background-color: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+.alert-danger {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.75rem;
+    }
+}

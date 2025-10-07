@@ -1,0 +1,59 @@
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload File</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm" method="POST" action="/files/upload" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="fileInput" class="form-label">Select File</label>
+                        <input type="file" class="form-control" id="fileInput" name="file" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categorySelect" class="form-label">Category</label>
+                        <select class="form-select" id="categorySelect" name="category">
+                            <option value="document">Document</option>
+                            <option value="image">Image</option>
+                            <option value="video">Video</option>
+                            <option value="audio">Audio</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    {% if tags %}
+                    <div class="mb-3 tags-container">
+                        <label class="form-label">Tags</label>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            {% for tag in tags %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" name="tags" id="tag_{{ tag.id }}" value="{{ tag.id }}">
+                                <label class="form-check-label" for="tag_{{ tag.id }}">
+                                    <span class="badge" style="background-color: {{ tag.color }}">{{ tag.name }}</span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="upload-progress mb-3" style="display: none;">
+                        <label class="form-label">Upload Progress</label>
+                        <div class="progress">
+                            <div class="upload-progress-bar progress-bar" role="progressbar" style="width: 0%">
+                                <span class="upload-progress-text">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

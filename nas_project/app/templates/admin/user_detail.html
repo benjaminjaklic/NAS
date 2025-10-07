@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}User Details - {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- User Info Card -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">User Details: {{ user.username }}</h3>
+            <div class="btn-group">
+                <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit User
+                </a>
+                {% if not user.is_admin %}
+                <button onclick="confirmDelete({{ user.id }})" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Delete User
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Account Information</h5>
+                    <table class="table">
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ user.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Role:</th>
+                            <td>{% if user.is_admin %}Admin{% else %}User{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>Joined:</th>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Last Login:</th>
+                            <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else 'Never' }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Storage Usage</h5>
+                    <div class="progress mb-2">
+                        {% set storage_percent = (user.storage_used / user.storage_limit * 100) if user.storage_limit > 0 else 0 %}
+                        <div class="progress-bar {% if storage_percent >= 90 %}bg-danger{% elif storage_percent >= 75 %}bg-warning{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ storage_percent }}%" 
+                             aria-valuenow="{{ storage_percent }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ "%.1f"|format(storage_percent) }}%
+                        </div>
+                    </div>
+                    <p>Used: {{ "%.2f"|format(user.storage_used / (1024**3)) }} GB / 
+                       Total: {{ "%.2f"|format(user.storage_limit / (1024**3)) }} GB</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Files Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">Files ({{ files|length }})</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Uploaded</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for file in files %}
+                        <tr>
+                            <td>{{ file.original_filename }}</td>
+                            <td>{{ file.file_type|title }}</td>
+                            <td>{{ "%.2f"|format(file.file_size / (1024*1024)) }} MB</td>
+                            <td>{{ file.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center">No files uploaded</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Card -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Recent Activity</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in activities %}
+                        <tr>
+                            <td>{{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>{{ activity.action }}</td>
+                            <td>{{ activity.details }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center">No recent activity</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(userId) {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('admin.delete_user', user_id=0) }}".replace('0', userId);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}
+
+{% extends "base.html" %}
+{% block title %}User Detail{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3>User: {{ user.username }}</h3>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
+                <li class="list-group-item"><strong>Approved:</strong> {{ 'Yes' if user.is_approved else 'No' }}</li>
+                <li class="list-group-item"><strong>Admin:</strong> {{ 'Yes' if user.is_admin else 'No' }}</li>
+                <li class="list-group-item"><strong>Storage Used:</strong> {{ (user.storage_used / (1024**3))|round(2) }} GB</li>
+                <li class="list-group-item"><strong>Storage Limit:</strong> {{ (user.storage_limit / (1024**3))|round(2) }} GB</li>
+                <li class="list-group-item"><strong>Joined:</strong> {{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

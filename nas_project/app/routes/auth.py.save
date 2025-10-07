@@ -1,0 +1,168 @@
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.utils import url_parse
+from app.models import db, User, ActivityLog
+from datetime import datetime
+
+
+auth_bp = Blueprint('auth', __name__)
+
+@auth_bp.route('/')
+def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('files.dashboard'))
+    return redirect(url_for('auth.login'))
+
+@auth_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('files.dashboard'))
+    
+    if request.method == 'POST':
+        user = User.query.filter_by(username=request.form['username']).first()
+        if user is None or not user.check_password(request.form['password']):
+            flash('Invalid username or password', 'error')
+            return redirect(url_for('auth.login'))
+        
+        if not getattr(user, 'is_approved', True) and not user.is_admin:
+            flash('Your account is pending approval', 'warning')
+            return redirect(url_for('auth.login'))
+        
+        login_user(user, remember=request.form.get('remember_me'))
+        
+        # Log activity
+        log = ActivityLog(
+            user_id=user.id,
+            action='login',
+            ip_address=request.remote_addr,
+            details='User logged in successfully'
+        )
+        db.session.add(log)
+        
+        # Update last login
+        user.last_login = datetime.utcnow()
+        db.session.commit()
+        
+        next_page = request.args.get('next')
+        if not next_page or url_parse(next_page).netloc != '':
+            next_page = url_for('files.dashboard')
+        return redirect(next_page)
+    
+    return render_template('auth/login.html')
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('files.dashboard'))
+    
+    if request.method == 'POST':
+        if User.query.filter_by(username=request.form['username']).first():
+            flash('Username already exists', 'error')
+            return redirect(url_for('auth.register'))
+        
+        if User.query.filter_by(email=request.form['email']).first():
+            flash('Email already registered', 'error')
+            return redirect(url_for('auth.register'))
+        
+        if request.form['password'] != request.form['confirm_password']:
+            flash('Passwords do not match', 'error')
+            return redirect(url_for('auth.register'))
+        
+        # Create user
+        user = User(
+            username=request.form['username'],
+            email=request.form['email'],
+            is_approved=False,  # Requires admin approval
+            storage_limit=current_app.config['DEFAULT_STORAGE_LIMIT'],
+            storage_used=0
+        )
+        user.set_password(request.form['password'])
+        
+        # Add user first
+        db.session.add(user)
+        db.session.commit()  # Commit to get the user.id
+        
+        # Now create the activity log with the user's ID
+        log = ActivityLog(
+            user_id=user.id,  # Now we have the user.id
+            action='register',
+            ip_address=request.remote_addr,
+            details='New user registration'
+        )
+        db.session.add(log)
+        db.session.commit()
+        
+        flash('Registration successful! Please wait for admin approval.', 'success')
+        return redirect(url_for('auth.login'))
+    
+    return render_template('auth/register.html')
+
+@auth_bp.route('/logout')
+@login_required
+def logout():
+    # Log activity before logging out
+    log = ActivityLog(
+        user_id=current_user.id,
+        action='logout',
+        ip_address=request.remote_addr,
+        details='User logged out'
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('auth.login'))
+
+@auth_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        if 'current_password' in request.form and 'password' in request.form:
+            if not current_user.check_password(request.form['current_password']):
+                flash('Current password is incorrect', 'error')
+            elif request.form['password'] != request.form['confirm_password']:
+                flash('New passwords do not match', 'error')
+            else:
+                current_user.set_password(request.form['password'])
+                
+                # Log password change
+                log = ActivityLog(
+                    user_id=current_user.id,
+                    action='password_change',
+                    ip_address=request.remote_addr,
+                    details='User changed password'
+                )
+                db.session.add(log)
+                db.session.commit()
+                flash('Password updated successfully', 'success')
+        
+        elif 'email' in request.form:
+            new_email = request.form['email']
+            if new_email != current_user.email:
+                if User.query.filter_by(email=new_email).first():
+                    flash('Email already registered', 'error')
+                else:
+                    old_email = current_user.email
+                    current_user.email = new_email
+                    
+                    # Log email change
+                    log = ActivityLog(
+                        user_id=current_user.id,
+                        action='email_change',
+                        ip_address=request.remote_addr,
+                        details=f'Email changed from {old_email} to {new_email}'
+                    )
+                    db.session.add(log)
+                    db.session.commit()
+                    flash('Email updated successfully', 'success')
+    
+    return render_template('auth/profile.html')
+
+@auth_bp.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('files.dashboard'))
+    
+    # Password reset functionality to be implemented
+    return render_template('auth/reset_password.html')
