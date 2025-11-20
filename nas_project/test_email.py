@@ -2,11 +2,11 @@ import smtplib
 from email.mime.text import MIMEText
 
 # Your Gmail credentials
-username = 'your.dnas@gmail.com'  # Replace with your exact Gmail address
-password = 'ruisgulqddozkofc'     # Replace with your exact App Password
+username = 'YOUR EMAIL ADDRESS'  # Replace with your exact Gmail address
+password = 'YOUR PASSWORD'     # Replace with your exact App Password
 
 # Recipient email
-recipient = 'benjaminjaklic123@gmail.com'  # Use your personal email to test
+recipient = 'RECIPIENTS EMAIL'  # Use your personal email to test
 
 # Create message
 msg = MIMEText('This is a test email from your NAS system.')
